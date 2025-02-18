@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { GlobalStyle } from './assets/GlobalStyles';
-import { ToastContainer } from 'react-toastify'; // Importar el ToastContainer
-import 'react-toastify/dist/ReactToastify.css'; // Estilos de toastify
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import Home from './pages/Home';
 import Profile from './pages/Profile';
@@ -11,13 +11,23 @@ import Register from './pages/Register';
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Obtener autenticación directamente del localStorage
+  const getAuthStatus = () => !!localStorage.getItem('token');
+  
+  // Estado de autenticación basado en localStorage
+  const [isAuthenticated, setIsAuthenticated] = useState(getAuthStatus);
+
+  // Listener para detectar cambios en localStorage y actualizar autenticación
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      setIsAuthenticated(true);
-    }
+    const handleStorageChange = () => {
+      setIsAuthenticated(getAuthStatus());
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   return (

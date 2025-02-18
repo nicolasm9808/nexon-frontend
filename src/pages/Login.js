@@ -19,19 +19,13 @@ const Login = ({ setIsAuthenticated }) => {
         password,
       });
 
-      console.log('Server response:', response.data); // Para debugging
-
       if (response.data.startsWith('Bearer ')) {
         const token = response.data.split(' ')[1];
         localStorage.setItem('token', token);
         
-        if (typeof setIsAuthenticated === 'function') {
-          setIsAuthenticated(true);
-          toast.success("Login successful!"); // Mensaje de éxito
-          navigate('/'); // Redirige a Home después del login
-        } else {
-          console.error('setIsAuthenticated is not a function');
-        }
+        setIsAuthenticated(true); // Establecer el estado de autenticación
+        window.dispatchEvent(new Event("storage"));  // Notificar cambios en localStorage
+        navigate('/'); // Redirigir al Home
       } else {
         toast.error('Invalid credentials'); // Mensaje de error
       }
