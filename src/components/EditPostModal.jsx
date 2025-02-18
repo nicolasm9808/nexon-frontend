@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
+import { useTheme } from "../context/ThemeContext";
 
 const ModalWrapper = styled.div`
   position: fixed;
@@ -15,8 +16,8 @@ const ModalWrapper = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background: ${({ darkMode }) => (darkMode ? "#1e1e1e" : "#fff")};
-  color: ${({ darkMode }) => (darkMode ? "#fff" : "#000")};
+  background: ${({ $darkMode }) => ($darkMode ? "#1e1e1e" : "#fff")};
+  color: ${({ $darkMode }) => ($darkMode ? "#fff" : "#000")};
   padding: 20px;
   border-radius: 10px;
   width: 400px;
@@ -29,8 +30,8 @@ const TextArea = styled.textarea`
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
-  background: ${({ darkMode }) => (darkMode ? "#2c2c2c" : "#fff")};
-  color: ${({ darkMode }) => (darkMode ? "#fff" : "#000")};
+  background: ${({ $darkMode }) => ($darkMode ? "#2c2c2c" : "#fff")};
+  color: ${({ $darkMode }) => ($darkMode ? "#fff" : "#000")};
   resize: none;
   margin-bottom: 10px;
 `;
@@ -40,14 +41,14 @@ const Input = styled.input`
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 5px;
-  background: ${({ darkMode }) => (darkMode ? "#2c2c2c" : "#fff")};
-  color: ${({ darkMode }) => (darkMode ? "#fff" : "#000")};
+  background: ${({ $darkMode }) => ($darkMode ? "#2c2c2c" : "#fff")};
+  color: ${({ $darkMode }) => ($darkMode ? "#fff" : "#000")};
   margin-bottom: 10px;
 `;
 
 const Button = styled.button`
-  background-color: ${({ $primary, darkMode }) =>
-    $primary ? (darkMode ? "#333" : "#007bff") : (darkMode ? "#444" : "#ccc")};
+  background-color: ${({ $primary, $darkMode }) =>
+    $primary ? ($darkMode ? "#333" : "#007bff") : ($darkMode ? "#444" : "#ccc")};
   color: white;
   border: none;
   padding: 10px;
@@ -58,16 +59,18 @@ const Button = styled.button`
   transition: 0.3s;
 
   &:hover {
-    background-color: ${({ $primary, darkMode }) =>
-      $primary ? (darkMode ? "#444" : "#0056b3") : (darkMode ? "#555" : "#999")};
+    background-color: ${({ $primary, $darkMode }) =>
+      $primary ? ($darkMode ? "#444" : "#0056b3") : ($darkMode ? "#555" : "#999")};
   }
 `;
 
 
-const EditPostModal = ({ post, onClose, onSave, darkMode }) => {
+const EditPostModal = ({ post, onClose, onSave }) => {
   const [text, setText] = useState(post.text || "");
   const [imageUrl, setImageUrl] = useState(post.imageUrl || "");
   const [error, setError] = useState("");
+
+  const { darkMode } = useTheme();
 
   useEffect(() => {
     setText(post.text || "");
@@ -86,26 +89,26 @@ const EditPostModal = ({ post, onClose, onSave, darkMode }) => {
 
   return (
     <ModalWrapper>
-      <ModalContent darkMode={darkMode}>
+      <ModalContent $darkMode={darkMode}>
         <h2>Editar Publicación</h2>
         {error && <p style={{ color: "red", fontSize: "14px" }}>{error}</p>}
         <TextArea
-          darkMode={darkMode}
+          $darkMode={darkMode}
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
         <Input
-          darkMode={darkMode}
+          $darkMode={darkMode}
           type="text"
           placeholder="URL de la imagen (opcional)"
           value={imageUrl}
           onChange={(e) => setImageUrl(e.target.value)}
         />
         <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <Button darkMode={darkMode} $primary onClick={handleSubmit}>
+        <Button $darkMode={darkMode} $primary onClick={handleSubmit}>
           Guardar
         </Button>
-        <Button darkMode={darkMode} onClick={onClose}>
+        <Button $darkMode={darkMode} onClick={onClose}>
           Cancelar
         </Button>
         </div>

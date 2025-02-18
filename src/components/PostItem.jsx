@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getAuthenticatedUser } from "../services/authService"; // Nueva función para obtener el usuario autenticado
+import { getAuthenticatedUser } from "../services/authService";
 
 const PostItem = ({ post, onEdit }) => {
   const [currentUser, setCurrentUser] = useState(null);
