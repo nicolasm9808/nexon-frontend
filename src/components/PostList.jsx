@@ -9,7 +9,6 @@ const PostList = () => {
   const [isFeed, setIsFeed] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
 
-  // Cargar publicaciones en base al orden y el estado del feed
   useEffect(() => {
     const loadPosts = async () => {
       const data = isFeed ? await fetchFeed() : await fetchPosts(orderBy);
@@ -18,23 +17,22 @@ const PostList = () => {
     loadPosts();
   }, [orderBy, isFeed]);
 
-  // Manejo de la edición de publicaciones
   const handleEdit = (post) => {
     setEditingPost(post);
   };
 
-  // Guardar la publicación editada
+  const handleDelete = (postId) => {
+    setPosts((prevPosts) => prevPosts.filter((p) => p.id !== postId));
+  };
+
   const handleSave = async (updatedData) => {
     if (editingPost) {
-      // Actualizar publicación en el backend
       const updatedPost = await updatePost(editingPost.id, updatedData);
-      // Actualizar estado de publicaciones para reflejar el cambio
       setPosts((prevPosts) =>
         prevPosts.map((p) =>
           p.id === editingPost.id ? { ...p, ...updatedPost } : p
         )
       );
-      // Cerrar el modal
       setEditingPost(null);
     }
   };
@@ -51,7 +49,7 @@ const PostList = () => {
       </div>
 
       {posts.map((post) => (
-        <PostItem key={post.id} post={post} onEdit={handleEdit} />
+        <PostItem key={post.id} post={post} onEdit={handleEdit} onDelete={handleDelete} />
       ))}
 
       {editingPost && (

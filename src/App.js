@@ -29,23 +29,19 @@ function App() {
     darkMode,
   };
 
-  // Obtener autenticación directamente del localStorage
-  const getAuthStatus = () => !!localStorage.getItem('token');
-  
-  // Estado de autenticación basado en localStorage
-  const [isAuthenticated, setIsAuthenticated] = useState(getAuthStatus);
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
 
-  // Listener para detectar cambios en localStorage y actualizar autenticación
   useEffect(() => {
     const handleStorageChange = () => {
-      setIsAuthenticated(getAuthStatus());
+      setIsAuthenticated(!!localStorage.getItem('token'));
     };
-
+  
     window.addEventListener('storage', handleStorageChange);
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
+  
 
   return (
     <ThemeContext.Provider value={{ darkMode, setDarkMode }}>
@@ -67,6 +63,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/" element={isAuthenticated ? <Home /> : <Navigate to="/login" />} />
             <Route path="/" element={isAuthenticated ? <Home /> : <Navigate to="/login" />} />
             <Route path="/profile" element={isAuthenticated ? <Profile /> : <Navigate to="/login" />} />
           </Routes>

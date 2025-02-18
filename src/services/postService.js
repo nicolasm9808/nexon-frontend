@@ -23,13 +23,26 @@ export const fetchFeed = async () => {
 };
 
 export const updatePost = async (postId, updatedData) => {
-    const response = await axios.patch(
-      `${API_URL}/${postId}`,
-      updatedData,{
-        headers: {
+  const response = await axios.patch(
+    `${API_URL}/${postId}`,
+    updatedData,{
+      headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};
+  
+export const deletePost = async (postId) => {
+  try {
+    const response = await axios.delete(`${API_URL}/${postId}`, {
+      headers: {
         Authorization: `Bearer ${token}`,
       },
     });
     return response.data;
-  };
-  
+  } catch (error) {
+    console.error("Error deleting post:", error);
+    throw error;
+  }
+};
