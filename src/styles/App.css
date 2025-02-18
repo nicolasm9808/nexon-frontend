@@ -36,3 +36,22 @@
     transform: rotate(360deg);
   }
 }
+
+body {
+  font-family: "Arial", sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+

@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { GlobalStyle } from './assets/GlobalStyles';
+import "./styles/index.css";
+import "./styles/App.css";
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 

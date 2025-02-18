@@ -26,3 +26,12 @@ export default {
   logout,
   getCurrentUser,
 };
+
+export const getAuthenticatedUser = async () => {
+    const response = await axios.get('http://localhost:8081/api/users/me', {
+        headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        });
+    return response.data;
+  };
