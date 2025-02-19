@@ -14,6 +14,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 
 import ThemeToggle from "./components/ThemeToggle";
+import Navbar from './components/Navbar';
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -47,8 +48,8 @@ function App() {
     <ThemeContext.Provider value={{ darkMode, setDarkMode }}>
       <ThemeProvider theme={theme}>
         <GlobalStyle />
-        <ThemeToggle /> {/* Botón para cambiar de modo */}
         <Router>
+          {isAuthenticated && <Navbar />}
           <ToastContainer
             position="top-right"
             autoClose={5000}
@@ -64,7 +65,7 @@ function App() {
             <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
             <Route path="/register" element={<Register />} />
             <Route path="/" element={isAuthenticated ? <Home /> : <Navigate to="/login" />} />
-            <Route path="/" element={isAuthenticated ? <Home /> : <Navigate to="/login" />} />
+            <Route path="/home" element={isAuthenticated ? <Home /> : <Navigate to="/login" />} />
             <Route path="/profile" element={isAuthenticated ? <Profile /> : <Navigate to="/login" />} />
           </Routes>
         </Router>
