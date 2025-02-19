@@ -5,6 +5,8 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import styled from "styled-components";
 import { FaHome, FaSearch, FaBell, FaUserCircle, FaBars, FaSignOutAlt, FaMoon, FaSun } from "react-icons/fa";
+import NotificationsModal from "./NotificationsModal";
+import { connectToNotifications, disconnectFromNotifications } from "../services/notificationService";
 
 const NavbarContainer = styled.nav`
   display: flex;
@@ -75,6 +77,23 @@ const ProfileCircle = styled(Link)`
   }
 `;
 
+const NotificationContainer = styled.div`
+  position: relative;
+  cursor: pointer;
+`;
+
+const NotificationBadge = styled.span`
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: red;
+  color: white;
+  border-radius: 50%;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-weight: bold;
+`;
+
 const MenuContainer = styled.div`
   position: relative;
 `;
@@ -109,8 +128,12 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [profileImage, setProfileImage] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const userId = localStorage.getItem("userId");
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -129,6 +152,35 @@ const Navbar = () => {
     }
   }, [token]);
 
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const response = await axios.get("http://localhost:8081/api/notifications/unread", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setNotifications(response.data);
+        setUnreadCount(response.data.filter((n) => !n.isRead).length);
+      } catch (error) {
+        console.error("Error fetching notifications", error);
+      }
+    };
+
+    if (token) {
+      fetchNotifications();
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (userId) {
+      connectToNotifications(userId, (newNotification) => {
+        setNotifications((prev) => [newNotification, ...prev]);
+        setUnreadCount((prev) => prev + 1);
+      });
+    }
+
+    return () => disconnectFromNotifications();
+  }, [userId]);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     toast.success("Sesión cerrada");
@@ -145,12 +197,10 @@ const Navbar = () => {
 
   return (
     <NavbarContainer>
-      {/* Icono de Home */}
       <NavIcon to="/">
         <FaHome />
       </NavIcon>
 
-      {/* Barra de búsqueda */}
       <SearchContainer as="form" onSubmit={handleSearch}>
         <SearchBar
           type="text"
@@ -163,17 +213,17 @@ const Navbar = () => {
         </button>
       </SearchContainer>
 
-      {/* Icono de Notificaciones */}
-      <NavIcon to="/notifications">
+      <NotificationContainer onClick={() => setShowNotifications(!showNotifications)}>
         <FaBell />
-      </NavIcon>
+        {unreadCount > 0 && <NotificationBadge>{unreadCount}</NotificationBadge>}
+      </NotificationContainer>
 
-      {/* Icono de Perfil */}
+      {showNotifications && <NotificationsModal show={showNotifications} onClose={() => setShowNotifications(false)} />}
+
       <ProfileCircle to="/profile">
         {profileImage ? <img src={profileImage} alt="Perfil" /> : <FaUserCircle />}
       </ProfileCircle>
 
-      {/* Menú de Opciones */}
       <MenuContainer>
         <NavIcon as="div" onClick={() => setMenuOpen(!menuOpen)}>
           <FaBars />
@@ -181,12 +231,10 @@ const Navbar = () => {
         {menuOpen && (
           <DropdownMenu>
             <MenuItem onClick={() => setDarkMode(!darkMode)}>
-              {darkMode ? <FaSun /> : <FaMoon />}
-              Modo {darkMode ? "Claro" : "Oscuro"}
+              {darkMode ? <FaSun /> : <FaMoon />} Modo {darkMode ? "Claro" : "Oscuro"}
             </MenuItem>
             <MenuItem onClick={handleLogout}>
-              <FaSignOutAlt />
-              Cerrar Sesión
+              <FaSignOutAlt /> Cerrar Sesión
             </MenuItem>
           </DropdownMenu>
         )}
