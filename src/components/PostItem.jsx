@@ -1,9 +1,114 @@
 import React, { useState, useEffect } from "react";
+import styled from "styled-components";
 import { getAuthenticatedUser } from "../services/authService";
 import { deletePost } from "../services/postService";
 import { getUsersWhoLikedPost, toggleLike } from "../services/likeService";
 import { getCommentsByPost, addComment, deleteComment } from "../services/commentService";
 import { toast } from "react-toastify";
+
+// Estilos para la publicación
+const PostContainer = styled.div`
+  background: ${({ theme }) => (theme.darkMode ? "#222" : "#fff")};
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+`;
+const PostHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+`;
+
+const UserName = styled.h3`
+  font-size: 18px;
+  font-weight: bold;
+  color: ${({ theme }) => (theme.darkMode ? "#fff" : "#333")};
+`;
+
+const PostText = styled.p`
+  font-size: 16px;
+  color: ${({ theme }) => (theme.darkMode ? "#ddd" : "#444")};
+  margin-bottom: 10px;
+`;
+
+const PostImage = styled.img`
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 10px;
+`;
+
+const PostActions = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid ${({ theme }) => (theme.darkMode ? "#444" : "#ddd")};
+`;
+
+const ActionButton = styled.span`
+  cursor: pointer;
+  font-size: 16px;
+  color: ${({ theme, $active }) => ($active ? "red" : theme.darkMode ? "#bbb" : "#333")};
+  margin-right: 10px;
+  transition: transform 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    transform: scale(1.1);
+    color: ${({ theme }) => (theme.darkMode ? "#fff" : "#000")};
+  }
+`;
+
+const NumberButton = styled.span`
+  cursor: pointer;
+  font-size: 16px;
+  color: ${({ theme, $active }) => ($active ? "red" : theme.darkMode ? "#bbb" : "#333")};
+  margin-right: 10px;
+  transition: transform 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    transform: scale(1.1);
+    color: ${({ theme }) => (theme.darkMode ? "#fff" : "#000")};
+  }
+`;
+
+const CommentInput = styled.input`
+  width: 100%;
+  padding: 10px;
+  border: 1px solid ${({ theme }) => (theme.darkMode ? "#444" : "#ccc")};
+  border-radius: 8px;
+  background: ${({ theme }) => (theme.darkMode ? "#333" : "#f9f9f9")};
+  color: ${({ theme }) => (theme.darkMode ? "#fff" : "#000")};
+  font-size: 14px;
+
+  &:focus {
+    outline: 2px solid ${({ theme }) => (theme.darkMode ? "#007bff" : "#0056b3")};
+  }
+`;
+
+const CommentButton = styled.button`
+  background: ${({ theme }) => (theme.darkMode ? "#007bff" : "#0056b3")};
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+
+  &:hover {
+    background: ${({ theme }) => (theme.darkMode ? "#0056b3" : "#003f7f")};
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+`;
 
 const PostItem = ({ post: initialPost, onEdit, onDelete, onUpdate }) => {
   const [currentUser, setCurrentUser] = useState(null);
@@ -143,49 +248,50 @@ const PostItem = ({ post: initialPost, onEdit, onDelete, onUpdate }) => {
   };
 
   return (
-    <div className="post-item">
-      <h3>{post.user.fullName}</h3>
-      <p>{post.text}</p>
+    <PostContainer>
+      <PostHeader>
+        <UserName>{post.user.fullName}</UserName>
+      </PostHeader>
+      <PostText>{post.text}</PostText>
       {post.imageUrl && <img src={post.imageUrl} alt="Post" />}
 
-      <div>
-        <span onClick={fetchLikes} style={{ cursor: "pointer", color: "blue" }}>
-          {post.totalLikes} Likes
-        </span>
-        <span 
-          onClick={handleLike} 
-          style={{ cursor: "pointer", marginLeft: "10px", color: hasLiked ? "red" : "black" }}
-        >
-          {hasLiked ? "❤️" : "🤍"}
-        </span>
-        |
-        <span onClick={fetchComments} style={{ cursor: "pointer", color: "blue", marginLeft: "10px" }}>
-          💬 {post.totalComments} Comments
-        </span>
-      </div>
+      <PostActions>
 
-      <form onSubmit={handleCommentSubmit} style={{ marginTop: "10px" }}>
-        <input 
+        <ActionButton onClick={handleLike} $active={hasLiked}>
+          {hasLiked ? "❤️" : "🤍"} 
+          {
+            <ActionButton onClick={fetchLikes} $active={hasLiked}>
+              {post.totalLikes} Likes
+            </ActionButton>
+          }
+        </ActionButton>
+        <ActionButton onClick={fetchComments}>
+          💬 {post.totalComments}
+        </ActionButton>
+      </PostActions>
+
+      <form onSubmit={handleCommentSubmit} style={{ marginTop: "10px", display: "flex", gap: "10px" }}>
+        <CommentInput 
           type="text" 
           value={newComment} 
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="Escribe un comentario..."
           required
         />
-        <button type="submit">Comentar</button>
+        <CommentButton type="submit">Comentar</CommentButton>
       </form>
 
       {isOwner && (
-        <div>
-          <button onClick={() => onEdit(post)}>✏️ Editar</button>
-          <button onClick={handleDelete} style={{ marginLeft: "10px", color: "red" }}>
+        <div style={{ marginTop: "10px", display: "flex", gap: "10px" }}>
+          <CommentButton  onClick={() => onEdit(post)}>✏️ Editar</CommentButton>
+          <CommentButton  onClick={handleDelete} style={{ background: "red" }}>
             🗑️ Eliminar
-          </button>
+          </CommentButton>
         </div>
       )}
 
       {likesModalOpen && (
-        <div className="modal">
+        <div style={{ marginTop: "10px", gap: "10px" }}>
           <h3>Usuarios que dieron like</h3>
           <ul>
             {likesList.length > 0 ? (
@@ -220,7 +326,7 @@ const PostItem = ({ post: initialPost, onEdit, onDelete, onUpdate }) => {
           <button onClick={() => setCommentsModalOpen(false)}>Cerrar</button>
         </div>
       )}
-    </div>
+    </PostContainer>
   );
 };
 
