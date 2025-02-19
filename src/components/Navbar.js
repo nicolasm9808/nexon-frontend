@@ -1,7 +1,8 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { toast } from "react-toastify";
+import axios from "axios";
 import styled from "styled-components";
 import { FaHome, FaSearch, FaBell, FaUserCircle, FaBars, FaSignOutAlt, FaMoon, FaSun } from "react-icons/fa";
 
@@ -29,13 +30,20 @@ const NavIcon = styled(Link)`
   }
 `;
 
+const SearchContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background-color: ${({ theme }) => (theme.darkMode ? "#333" : "#f0f0f0")};
+  padding: 5px 10px;
+  border-radius: 20px;
+`;
+
 const SearchBar = styled.input`
   padding: 8px;
   border: none;
-  border-radius: 20px;
   outline: none;
-  width: 200px;
-  background-color: ${({ theme }) => (theme.darkMode ? "#333" : "#f0f0f0")};
+  background: transparent;
   color: ${({ theme }) => (theme.darkMode ? "#ffffff" : "#000000")};
 
   &::placeholder {
@@ -50,11 +58,20 @@ const ProfileCircle = styled(Link)`
   overflow: hidden;
   cursor: pointer;
   border: 2px solid ${({ theme }) => (theme.darkMode ? "#ffffff" : "#000000")};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: ${({ theme }) => (theme.darkMode ? "#333" : "#f0f0f0")};
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  svg {
+    font-size: 32px;
+    color: ${({ theme }) => (theme.darkMode ? "#ffffff" : "#000000")};
   }
 `;
 
@@ -87,15 +104,43 @@ const MenuItem = styled.div`
   }
 `;
 
-const Navbar = ({ onSearch }) => {
+const Navbar = () => {
   const { darkMode, setDarkMode } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [profileImage, setProfileImage] = useState(null);
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const response = await axios.get("http://localhost:8081/api/users/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setProfileImage(response.data.profilePicture);
+      } catch (err) {
+        console.error("Error fetching profile picture:", err);
+      }
+    };
+
+    if (token) {
+      fetchUserProfile();
+    }
+  }, [token]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     toast.success("Sesión cerrada");
     window.location.reload();
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      navigate(`/user/${searchTerm.trim()}`);
+      setSearchTerm("");
+    }
   };
 
   return (
@@ -106,13 +151,17 @@ const Navbar = ({ onSearch }) => {
       </NavIcon>
 
       {/* Barra de búsqueda */}
-      <SearchBar
-        type="text"
-        placeholder="Buscar usuarios..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && onSearch(searchTerm)}
-      />
+      <SearchContainer as="form" onSubmit={handleSearch}>
+        <SearchBar
+          type="text"
+          placeholder="Buscar usuarios..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <button type="submit" style={{ background: "none", border: "none", cursor: "pointer" }}>
+          <FaSearch color={darkMode ? "#ffffff" : "#000000"} />
+        </button>
+      </SearchContainer>
 
       {/* Icono de Notificaciones */}
       <NavIcon to="/notifications">
@@ -121,7 +170,7 @@ const Navbar = ({ onSearch }) => {
 
       {/* Icono de Perfil */}
       <ProfileCircle to="/profile">
-        <img src="https://via.placeholder.com/40" alt="Perfil" />
+        {profileImage ? <img src={profileImage} alt="Perfil" /> : <FaUserCircle />}
       </ProfileCircle>
 
       {/* Menú de Opciones */}

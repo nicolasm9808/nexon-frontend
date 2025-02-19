@@ -12,8 +12,8 @@ import Home from './pages/Home';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import UserProfile from "./pages/UserProfile";
 
-import ThemeToggle from "./components/ThemeToggle";
 import Navbar from './components/Navbar';
 
 function App() {
@@ -67,6 +67,7 @@ function App() {
             <Route path="/" element={isAuthenticated ? <Home /> : <Navigate to="/login" />} />
             <Route path="/home" element={isAuthenticated ? <Home /> : <Navigate to="/login" />} />
             <Route path="/profile" element={isAuthenticated ? <Profile /> : <Navigate to="/login" />} />
+            <Route path="/user/:username" element={<UserProfile />} />
           </Routes>
         </Router>
       </ThemeProvider>
