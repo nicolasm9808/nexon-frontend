@@ -1,28 +1,43 @@
 import React, { useState, useEffect } from "react";
 import { getAuthenticatedUser } from "../services/authService";
 import { deletePost } from "../services/postService";
-import { getUsersWhoLikedPost } from "../services/likeService";
-import { getCommentsByPost } from "../services/commentService";
+import { getUsersWhoLikedPost, toggleLike } from "../services/likeService";
+import { getCommentsByPost, addComment, deleteComment } from "../services/commentService";
 import { toast } from "react-toastify";
 
-const PostItem = ({ post, onEdit, onDelete }) => {
+const PostItem = ({ post: initialPost, onEdit, onDelete, onUpdate }) => {
   const [currentUser, setCurrentUser] = useState(null);
+  const [post, setPost] = useState(initialPost);
   const [likesModalOpen, setLikesModalOpen] = useState(false);
   const [commentsModalOpen, setCommentsModalOpen] = useState(false);
   const [likesList, setLikesList] = useState([]);
   const [commentsList, setCommentsList] = useState([]);
+  const [hasLiked, setHasLiked] = useState(initialPost.likedByCurrentUser || false);
+  const [newComment, setNewComment] = useState("");
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const user = await getAuthenticatedUser();
-      setCurrentUser(user);
+    const fetchData = async () => {
+      try {
+        const user = await getAuthenticatedUser();
+        setCurrentUser(user);
+
+        // Obtener la lista de likes
+        const usersWhoLiked = await getUsersWhoLikedPost(initialPost.id);
+        setLikesList(usersWhoLiked);
+
+        // Verificar si el usuario actual está en la lista de likes
+        const userHasLiked = usersWhoLiked.some((likedUser) => likedUser.id === user.id);
+        setHasLiked(userHasLiked);
+      } catch (error) {
+        toast.error("Error al cargar los datos del post");
+      }
     };
-    fetchUser();
-  }, []);
+
+    fetchData();
+  }, [initialPost.id]);
 
   const isOwner = currentUser && currentUser.id === post.user.id;
 
-  // Obtener lista de usuarios que dieron like
   const fetchLikes = async () => {
     try {
       const users = await getUsersWhoLikedPost(post.id);
@@ -33,7 +48,6 @@ const PostItem = ({ post, onEdit, onDelete }) => {
     }
   };
 
-  // Obtener lista de comentarios
   const fetchComments = async () => {
     try {
       const comments = await getCommentsByPost(post.id);
@@ -41,6 +55,73 @@ const PostItem = ({ post, onEdit, onDelete }) => {
       setCommentsModalOpen(true);
     } catch (error) {
       toast.error("Error al obtener los comentarios");
+    }
+  };
+
+  const handleLike = async () => {
+    try {
+      const liked = await toggleLike(post.id);
+  
+      let updatedLikesList;
+      if (liked) {
+        updatedLikesList = [...likesList, currentUser]; // Agregar usuario actual
+      } else {
+        updatedLikesList = likesList.filter((user) => user.id !== currentUser.id); // Quitar usuario actual
+      }
+  
+      setLikesList(updatedLikesList);
+      setHasLiked(liked);
+  
+      setPost((prevPost) => ({
+        ...prevPost,
+        totalLikes: liked ? prevPost.totalLikes + 1 : prevPost.totalLikes - 1,
+        likedByCurrentUser: liked,
+      }));
+  
+      onUpdate({ ...post, totalLikes: post.totalLikes + (liked ? 1 : -1), likedByCurrentUser: liked });
+    } catch (error) {
+      toast.error("Error al dar like");
+    }
+  };
+  
+
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (newComment.trim() === "") return;
+
+    try {
+      const comment = await addComment(post.id, newComment);
+      setCommentsList([...commentsList, comment]);
+      setNewComment("");
+
+      setPost((prevPost) => ({
+        ...prevPost,
+        totalComments: prevPost.totalComments + 1,
+      }));
+
+      onUpdate({ ...post, totalComments: post.totalComments + 1 });
+    } catch (error) {
+      toast.error("Error al agregar el comentario");
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (!window.confirm("¿Estás seguro de que deseas eliminar este comentario?")) return;
+
+    try {
+      await deleteComment(commentId);
+      setCommentsList(commentsList.filter((comment) => comment.id !== commentId));
+
+      setPost((prevPost) => ({
+        ...prevPost,
+        totalComments: prevPost.totalComments - 1,
+      }));
+
+      onUpdate({ ...post, totalComments: post.totalComments - 1 });
+
+      toast.success("Comentario eliminado correctamente");
+    } catch (error) {
+      toast.error("Error al eliminar el comentario");
     }
   };
 
@@ -61,18 +142,34 @@ const PostItem = ({ post, onEdit, onDelete }) => {
       <h3>{post.user.fullName}</h3>
       <p>{post.text}</p>
       {post.imageUrl && <img src={post.imageUrl} alt="Post" />}
-      
-      {/* Botones de interacciones */}
+
       <div>
         <span onClick={fetchLikes} style={{ cursor: "pointer", color: "blue" }}>
-          👍 {post.totalLikes} Likes
-        </span> | 
+          {post.totalLikes} Likes
+        </span>
+        <span 
+          onClick={handleLike} 
+          style={{ cursor: "pointer", marginLeft: "10px", color: hasLiked ? "red" : "black" }}
+        >
+          {hasLiked ? "❤️" : "🤍"}
+        </span>
+        |
         <span onClick={fetchComments} style={{ cursor: "pointer", color: "blue", marginLeft: "10px" }}>
           💬 {post.totalComments} Comments
         </span>
       </div>
 
-      {/* Botones de edición/eliminación */}
+      <form onSubmit={handleCommentSubmit} style={{ marginTop: "10px" }}>
+        <input 
+          type="text" 
+          value={newComment} 
+          onChange={(e) => setNewComment(e.target.value)}
+          placeholder="Escribe un comentario..."
+          required
+        />
+        <button type="submit">Comentar</button>
+      </form>
+
       {isOwner && (
         <div>
           <button onClick={() => onEdit(post)}>✏️ Editar</button>
@@ -82,18 +179,22 @@ const PostItem = ({ post, onEdit, onDelete }) => {
         </div>
       )}
 
-      {/* Modal para mostrar los usuarios que dieron like */}
       {likesModalOpen && (
         <div className="modal">
           <h3>Usuarios que dieron like</h3>
           <ul>
-            {likesList.map((user, index) => (
+            {likesList.length > 0 ? (
+              likesList.map((user, index) => (
               <li key={index}>{user}</li>
-            ))}
+              ))
+            ) : (
+              <p>No hay likes aún</p>
+            )}
           </ul>
           <button onClick={() => setLikesModalOpen(false)}>Cerrar</button>
         </div>
       )}
+
 
       {/* Modal para mostrar los comentarios */}
       {commentsModalOpen && (
@@ -103,6 +204,11 @@ const PostItem = ({ post, onEdit, onDelete }) => {
             {commentsList.map((comment) => (
               <li key={comment.id}>
                 <strong>{comment.user.username}:</strong> {comment.text}
+                {(currentUser?.id === comment.user.id || isOwner) && (
+                  <button onClick={() => handleDeleteComment(comment.id)} style={{ marginLeft: "10px", color: "red" }}>
+                    🗑️
+                  </button>
+                )}
               </li>
             ))}
           </ul>

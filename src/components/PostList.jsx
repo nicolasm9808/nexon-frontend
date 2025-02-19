@@ -37,6 +37,13 @@ const PostList = () => {
     }
   };
 
+  // 🔄 Función para actualizar un post cuando cambia su número de likes o comentarios
+  const handlePostUpdate = (updatedPost) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((p) => (p.id === updatedPost.id ? updatedPost : p))
+    );
+  };
+
   return (
     <div>
       <div>
@@ -49,7 +56,13 @@ const PostList = () => {
       </div>
 
       {posts.map((post) => (
-        <PostItem key={post.id} post={post} onEdit={handleEdit} onDelete={handleDelete} />
+        <PostItem
+          key={post.id}
+          post={post}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onUpdate={handlePostUpdate} // 📌 Pasamos la función de actualización
+        />
       ))}
 
       {editingPost && (
