@@ -62,14 +62,10 @@ const PostItem = ({ post: initialPost, onEdit, onDelete, onUpdate }) => {
     try {
       const liked = await toggleLike(post.id);
   
-      let updatedLikesList;
-      if (liked) {
-        updatedLikesList = [...likesList, currentUser]; // Agregar usuario actual
-      } else {
-        updatedLikesList = likesList.filter((user) => user.id !== currentUser.id); // Quitar usuario actual
-      }
+      setLikesList((prevLikes) => 
+        liked ? [...prevLikes, currentUser] : prevLikes.filter((user) => user.id !== currentUser.id)
+      );
   
-      setLikesList(updatedLikesList);
       setHasLiked(liked);
   
       setPost((prevPost) => ({
@@ -78,32 +74,41 @@ const PostItem = ({ post: initialPost, onEdit, onDelete, onUpdate }) => {
         likedByCurrentUser: liked,
       }));
   
-      onUpdate({ ...post, totalLikes: post.totalLikes + (liked ? 1 : -1), likedByCurrentUser: liked });
+      onUpdate((prevPost) => ({
+        ...prevPost,
+        totalLikes: liked ? prevPost.totalLikes + 1 : prevPost.totalLikes - 1,
+        likedByCurrentUser: liked,
+      }));
     } catch (error) {
       toast.error("Error al dar like");
     }
   };
   
+  
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (newComment.trim() === "") return;
-
+  
     try {
       const comment = await addComment(post.id, newComment);
-      setCommentsList([...commentsList, comment]);
+      setCommentsList((prevComments) => [...prevComments, comment]);
       setNewComment("");
-
+  
       setPost((prevPost) => ({
         ...prevPost,
         totalComments: prevPost.totalComments + 1,
       }));
-
-      onUpdate({ ...post, totalComments: post.totalComments + 1 });
+  
+      onUpdate((prevPost) => ({
+        ...prevPost,
+        totalComments: prevPost.totalComments + 1,
+      }));
     } catch (error) {
       toast.error("Error al agregar el comentario");
     }
   };
+  
 
   const handleDeleteComment = async (commentId) => {
     if (!window.confirm("¿Estás seguro de que deseas eliminar este comentario?")) return;
