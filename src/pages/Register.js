@@ -1,8 +1,86 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';  // Asegúrate de importar correctamente
-import 'react-toastify/dist/ReactToastify.css'; // Asegúrate de importar los estilos
+import { toast } from 'react-toastify';
+import styled from 'styled-components';
+
+const RegisterContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #1e1e1e, #3a3a3a);
+`;
+
+const RegisterBox = styled.div`
+  background: #222;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  width: 100%;
+  max-width: 450px;
+`;
+
+const Title = styled.h2`
+  color: #fff;
+  margin-bottom: 1rem;
+`;
+
+const Form = styled.form`
+  display: flex;
+  flex-direction: column;
+`;
+
+const Input = styled.input`
+  padding: 10px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 5px;
+  background: #333;
+  color: #fff;
+  font-size: 1rem;
+
+  &:focus {
+    outline: none;
+    background: #444;
+  }
+`;
+
+const Button = styled.button`
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background: #ff4500;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s;
+
+  &:hover {
+    background: #e63e00;
+  }
+`;
+
+const ErrorMessage = styled.p`
+  color: #ff4d4d;
+  font-size: 0.9rem;
+`;
+
+const LoginLink = styled.p`
+  color: #aaa;
+  margin-top: 1rem;
+
+  a {
+    color: #ff4500;
+    text-decoration: none;
+    font-weight: bold;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+`;
 
 const Register = () => {
   const [fullName, setFullName] = useState('');
@@ -14,32 +92,29 @@ const Register = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Validación de formulario
   const validateForm = () => {
-    console.log("Validating form...");
-
     if (!fullName) {
-      toast.error('Full name is required', { position: 'top-center'});
+      toast.error('Full name is required');
       return false;
     }
     if (!username) {
-      toast.error('Username is required', { position: 'top-center'});
+      toast.error('Username is required');
       return false;
     }
     if (!phoneNumber || !/^(\+?\d{10,15})$/.test(phoneNumber)) {
-      toast.error('Invalid phone number. It should be between 10 to 15 digits.', {position: 'top-center'});
+      toast.error('Invalid phone number');
       return false;
     }
     if (!email || !/\S+@\S+\.\S+/.test(email)) {
-      toast.error('Invalid email address', { position: 'top-center'});
+      toast.error('Invalid email address');
       return false;
     }
     if (!password || !/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@$%^&*()_+={}\[\]:";\'<>,.?/]).{8,12}$/.test(password)) {
-      toast.error('Password must contain 1 uppercase letter, 1 lowercase letter, 1 digit, and 1 special character. Length 8-12 characters.', {position: 'top-center'});
+      toast.error('Password must contain uppercase, lowercase, number, and special character.');
       return false;
     }
     if (!dateOfBirth || new Date(dateOfBirth) >= new Date()) {
-      toast.error('Date of birth must be in the past and you must be at least 14 years old.', {position: 'top-center'});
+      toast.error('Invalid date of birth.');
       return false;
     }
     return true;
@@ -47,8 +122,6 @@ const Register = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-
-    console.log("Handling registration...");  // Verifica que se llame a esta función
 
     if (!validateForm()) return;
 
@@ -63,67 +136,72 @@ const Register = () => {
       });
 
       if (response.status === 201) {
-        toast.success('Registration successful! Please login.', {position: 'top-center'});
+        toast.success('Registration successful! Please login.');
         navigate('/login');
       }
     } catch (err) {
-      console.error("Registration error:", err);  // Log de error
+      console.error("Registration error:", err);
       const errorMessage = err.response?.data?.message || 'Error during registration';
-      toast.error(errorMessage, {position: 'top-center'});
+      toast.error(errorMessage);
       setError(errorMessage);
     }
   };
 
   return (
-    <div>
-      <h2>Register</h2>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <form onSubmit={handleRegister}>
-        <input
-          type="text"
-          placeholder="Full Name"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Phone Number"
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
-          required
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <input
-          type="date"
-          placeholder="Date of Birth"
-          value={dateOfBirth}
-          onChange={(e) => setDateOfBirth(e.target.value)}
-          required
-        />
-        <button type="submit">Register</button>
-      </form>
-    </div>
+    <RegisterContainer>
+      <RegisterBox>
+        <Title>📝 Registrarse</Title>
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+        <Form onSubmit={handleRegister}>
+          <Input 
+            type="text" 
+            placeholder="Nombre Completo" 
+            value={fullName} 
+            onChange={(e) => setFullName(e.target.value)} 
+            required 
+          />
+          <Input 
+            type="text" 
+            placeholder="Usuario" 
+            value={username} 
+            onChange={(e) => setUsername(e.target.value)} 
+            required 
+          />
+          <Input 
+            type="text" 
+            placeholder="Teléfono" 
+            value={phoneNumber} 
+            onChange={(e) => setPhoneNumber(e.target.value)} 
+            required 
+          />
+          <Input 
+            type="email" 
+            placeholder="Correo Electrónico" 
+            value={email} 
+            onChange={(e) => setEmail(e.target.value)} 
+            required 
+          />
+          <Input 
+            type="password" 
+            placeholder="Contraseña" 
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            required 
+          />
+          <Input 
+            type="date" 
+            placeholder="Fecha de Nacimiento" 
+            value={dateOfBirth} 
+            onChange={(e) => setDateOfBirth(e.target.value)} 
+            required 
+          />
+          <Button type="submit">Registrarse</Button>
+        </Form>
+        <LoginLink>
+          ¿Ya tienes cuenta? <a href="/login">Inicia sesión</a>
+        </LoginLink>
+      </RegisterBox>
+    </RegisterContainer>
   );
 };
 
